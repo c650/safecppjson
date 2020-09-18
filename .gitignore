@@ -9,3 +9,16 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+
+# ninja stuff
+.ninja_deps
+.ninja_log
+build.ninja
+rules.ninja
+safecppjsonConfig.cmake
+safecppjsonConfigVersion.cmake
+
+
+bin/
+lib/
+build/
