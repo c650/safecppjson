@@ -25,11 +25,19 @@ endmacro()
 find_package_and_export(cpprestsdk REQUIRED)
 find_package_and_export(fmt REQUIRED)
 
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+# file(GLOB_RECURSE SOURCES "src/*.cpp")
+# file (GLOB_RECURSE HEADERS "src/*.hpp")
 
-add_library(safecppjson STATIC ${SOURCES})
-target_link_libraries(safecppjson PRIVATE cpprestsdk::cpprest)
-target_link_libraries(safecppjson PUBLIC fmt::fmt)
+add_library(${PROJECT_NAME} INTERFACE)
+target_compile_definitions(
+    ${PROJECT_NAME}
+    INTERFACE
+)
+target_include_directories(
+  ${PROJECT_NAME}
+  INTERFACE $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/src>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_link_libraries(safecppjson INTERFACE cpprestsdk::cpprest fmt::fmt)
 
 add_subdirectory(tests/)
 
