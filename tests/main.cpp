@@ -51,3 +51,44 @@ TEST_CASE("Missing field candle", "[candle]") {
     REQUIRE(true);
   }
 };
+
+TEST_CASE("Wrong type in field candle", "[candle]") {
+  std::ifstream data{"./tests/json/wrong_type_candle.json"};
+  auto j = web::json::value::parse(data);
+  data.close();
+
+  try {
+    auto candle{safecppjson::ToFromJson<Candle>::from(j)};
+  } catch (std::exception& e) {
+    std::cerr << e.what() << '\n';
+    REQUIRE(true);
+  }
+};
+
+// ----
+
+struct MoreStuff {
+  std::string a;
+  double b;
+  int c;
+  std::optional<Candle> d;
+  std::vector<int> e;
+
+  MoreStuff(web::json::value& j)
+      : a(safecppjson::guard_field<decltype(a)>(j, "a")),
+        b(safecppjson::guard_field<decltype(b)>(j, "b")),
+        c(safecppjson::guard_field<decltype(c)>(j, "c")),
+        d(safecppjson::guard_field<decltype(d)>(j, "d")),
+        e(safecppjson::guard_field<decltype(e)>(j, "e")) {
+  }
+};
+
+TEST_CASE("Valid MoreStuff", "[morestuff]") {
+  std::ifstream data{"./tests/json/valid_more_stuff.json"};
+  auto j = web::json::value::parse(data);
+  data.close();
+
+  auto candle{safecppjson::ToFromJson<MoreStuff>::from(j)};
+
+  REQUIRE(true);
+};
