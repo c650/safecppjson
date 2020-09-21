@@ -20,7 +20,7 @@ namespace safecppjson::exceptions {
 
     FromJsonException(const web::json::value& val, const std::string& msg)
         : FromJsonException(val) {
-      this->msg.append("note: ");
+      this->msg.append(" note: ");
       this->msg.append(msg);
     }
 

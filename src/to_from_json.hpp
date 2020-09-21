@@ -170,6 +170,28 @@ namespace safecppjson {
   //   }
   // };
 
+  template <typename T>
+  struct ToFromJson<std::optional<T>> {
+    static bool validate(json& j) {
+      return j.is_null() || ToFromJson<T>::validate(j);
+    }
+
+    static std::optional<T> from(json& j) {
+      if (j.is_null()) {
+        return std::optional<T>{};
+      }
+
+      return std::optional<T>{ToFromJson<T>::from(j)};
+    }
+
+    static json to(const std::optional<T>& v) {
+      if (v.has_value()) {
+        return json{v.value()};
+      }
+      return json::null();
+    }
+  };
+
   template <>
   struct ToFromJson<json> {
     static bool validate(json& j) {
