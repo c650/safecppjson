@@ -1,54 +1,53 @@
+#define CATCH_CONFIG_MAIN
 #include <cpprest/json.h>
 
-#include <iostream>
+#include <catch2/catch.hpp>
+#include <fstream>
 
-#include "../src/include/with_label.hpp"
+#include "../src/guard_field.hpp"
+#include "../src/to_from_json.hpp"
 
 struct Candle {
-  template <typename T>
-  using wl = safecppjson::WithLabel<T>;
-
-  wl<std::optional<double>> open, high, low, close;
+  double open, high, low, close;
 
   Candle(void) = default;
 
   Candle(web::json::value& j)
-      : open("open", j), high("high", j), low("low", j), close("close", j) {
+      : open(safecppjson::guard_field<decltype(open)>(j, "open")),
+        high(safecppjson::guard_field<decltype(high)>(j, "high")),
+        low(safecppjson::guard_field<decltype(low)>(j, "low")),
+        close(safecppjson::guard_field<decltype(close)>(j, "close")) {
   }
 
   web::json::value serialise(void) {
     web::json::value ret;
-    ret[open.label] = open.to_json();
-    ret[high.label] = high.to_json();
-    ret[low.label] = low.to_json();
-    ret[close.label] = close.to_json();
+    ret["open"] = safecppjson::ToFromJson<decltype(open)>::to(open);
+    ret["high"] = safecppjson::ToFromJson<decltype(high)>::to(high);
+    ret["low"] = safecppjson::ToFromJson<decltype(low)>::to(low);
+    ret["close"] = safecppjson::ToFromJson<decltype(close)>::to(close);
     return ret;
   }
 };
 
-int main(void) {
-  web::json::value j;
-  j["field"] = 1;
+TEST_CASE("Valid candle", "[candle]") {
+  std::ifstream data{"./tests/json/valid_candle.json"};
+  auto j = web::json::value::parse(data);
+  data.close();
 
-  safecppjson::WithLabel<int32_t> field{"field", j};
+  auto candle{safecppjson::ToFromJson<Candle>::from(j)};
 
-  j["stuff"] = web::json::value::parse("[1,2,3]");
+  REQUIRE(true);
+};
 
-  safecppjson::WithLabel<std::vector<int32_t>> stuff{"stuff", j};
+TEST_CASE("Missing field candle", "[candle]") {
+  std::ifstream data{"./tests/json/missing_field_candle.json"};
+  auto j = web::json::value::parse(data);
+  data.close();
 
-  for (auto& e : stuff()) {
-    std::cerr << e << "\n";
+  try {
+    auto candle{safecppjson::ToFromJson<Candle>::from(j)};
+  } catch (std::exception& e) {
+    std::cerr << e.what() << '\n';
+    REQUIRE(true);
   }
-
-  safecppjson::WithLabel<std::chrono::milliseconds> field_as_duration{"field",
-                                                                      j};
-
-  j = web::json::value::parse("{\"open\":1.0}");
-  Candle ca{j};
-
-  safecppjson::WithLabel<std::optional<int32_t>> close{"close", j};
-
-  std::cout << close().has_value() << "\n";
-
-  return 0;
-}
+};
